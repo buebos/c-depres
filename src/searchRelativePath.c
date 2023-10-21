@@ -6,6 +6,8 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#include "util/printe.h"
+
 struct DirStack {
     int capacity;
     int len;
@@ -34,6 +36,8 @@ DIR* getTop(struct DirStack* stack) {
 
 DIR* push(struct DirStack* stack, DIR* dir) {
     if (isFull(stack)) {
+        printf("[ERROR] Can't push dir, the stack is full: %s\n", dir->dd_dir);
+
         return NULL;
     }
 
@@ -45,6 +49,13 @@ DIR* push(struct DirStack* stack, DIR* dir) {
 
 DIR* pop(struct DirStack* stack) {
     DIR* topDir = getTop(stack);
+
+    if (topDir == NULL) {
+        printe("The stack is empty, cannot remove anything");
+
+        return NULL;
+    }
+
     closedir(topDir);
     stack->len -= 1;
 
@@ -55,9 +66,14 @@ char* genNewTopDirPath(struct DirStack* dirs) {
     char* path = calloc(1, sizeof(char));
 
     for (int i = 0; i < dirs->len; i++) {
-        char* dirName = dirs->items[i]->dd_dir.d_name;
+        char* dirName = dirs->items[i]->dd_dta.name;
+        int dirNameLen = strlen(dirName);
 
-        path = realloc(path, strlen(path) + strlen(dirName) + 2);
+        if (!dirNameLen) {
+            continue;
+        }
+
+        path = realloc(path, strlen(path) + dirNameLen + 2);
 
         strcat(path, dirName);
         strcat(path, "/");
@@ -83,11 +99,14 @@ char* searchRelativePath(char* filename) {
     char* currentPath = calloc(1, sizeof(char));
     struct dirent* dp;
     struct DirStack* dirs = DirStack(50);
-    DIR* top = push(dirs, opendir("."));
+    DIR* top = opendir(".");
 
     if (top == NULL) {
+        printe("Could not open root directory. Are there enough permissions for the exe?");
         return NULL;
     }
+
+    push(dirs, top);
 
     dp = readdir(top);
 
@@ -109,8 +128,15 @@ char* searchRelativePath(char* filename) {
             free(currentPath);
 
             currentPath = genNewTopDirPath(dirs);
+            top = opendir(currentPath);
 
-            top = push(dirs, opendir(currentPath));
+            if (top == NULL) {
+                printf("[ERROR] Could not open directory: %s. Are there enough permissions for the exe?", currentPath);
+                free(currentPath);
+                return NULL;
+            }
+
+            push(dirs, top);
         }
 
         free(dpPath);
@@ -119,18 +145,15 @@ char* searchRelativePath(char* filename) {
 
         if (dp == NULL) {
             top = pop(dirs);
-
-            /**
-             * The file was not found even when returning to the
-             * root dir
-             */
-            if (top == NULL) {
-                return NULL;
-            }
+            free(currentPath);
+            currentPath = genNewTopDirPath(dirs);
 
             dp = readdir(top);
         }
     }
+
+    printe("Could not find the file in any subdirectory. Are you sure this file exists?");
+    free(currentPath);
 
     return NULL;
 }

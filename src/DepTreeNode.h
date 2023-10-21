@@ -11,6 +11,10 @@ struct DepTreeNode *DepTreeNode(char *path);
 
 struct DepTreeNode *pushDepTreeFilepath(struct DepTreeNode *parent, char *dep);
 
-void fillDepTree(struct DepTreeNode *parent);
+void fillDepTree(struct DepTreeNode *root, struct DepTreeNode *parent);
+
+char *pushDepList(struct DepTreeNode *parent, char *list);
+
+void freeDepTree(struct DepTreeNode *parent);
 
 #endif

@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "findFileDeps.h"
+#include "parseFileDeps.h"
 #include "util/printe.h"
 
 struct DepTreeNode {
@@ -41,41 +41,88 @@ struct DepTreeNode *pushDepTreeFilepath(struct DepTreeNode *parent, char *dep) {
 }
 
 struct DepTreeNode *findDep(struct DepTreeNode *parent, char *filepath) {
-    if (parent->firstChild == NULL) {
-        return NULL;
+    struct DepTreeNode *dep;
+
+    if (parent->firstChild != NULL) {
+        dep = findDep(parent->firstChild, filepath);
+
+        if (dep != NULL) {
+            return dep;
+        }
     }
 
-    struct DepTreeNode *child = parent->firstChild;
+    dep = parent->nextSibling;
 
-    while (child != NULL) {
-        if (strcmp(child->path, filepath) == 0) {
-            return child;
+    while (dep != NULL) {
+        if (strcmp(dep->path, filepath) == 0) {
+            return dep;
         }
 
-        child = findDep(child, filepath);
-
-        if (child) {
-            printf("Repeated: %s\n", child->path);
-            return child;
-        }
-
-        child = child->nextSibling;
+        dep = dep->nextSibling;
     }
 
     return NULL;
 }
 
-void fillDepTree(struct DepTreeNode *parent) {
-    struct Deps *deps = findFileDeps(parent->path);
+void fillDepTree(struct DepTreeNode *root, struct DepTreeNode *parent) {
+    struct Deps *deps = parseFileDeps(parent->path);
 
     if (deps == NULL || deps->length == 0) {
         return;
     }
 
     for (int i = 0; i < deps->length; i++) {
-        struct DepTreeNode *child = pushDepTreeFilepath(parent, deps->items[i]);
+        struct DepTreeNode *dep = findDep(root, deps->items[i]);
 
-        printf("%s\t>\t%s\n", parent->path, child->path);
-        fillDepTree(child);
+        if (dep != NULL) {
+            // printf("%s\t>\t__%s__\n", parent->path, dep->path);
+
+            continue;
+        }
+
+        dep = pushDepTreeFilepath(parent, deps->items[i]);
+
+        // printf("%s\t>\t%s\n", parent->path, dep->path);
+
+        fillDepTree(root, dep);
     }
+}
+
+char *pushDepList(struct DepTreeNode *parent, char *list) {
+    if (parent->firstChild != NULL) {
+        list = pushDepList(parent->firstChild, list);
+    }
+
+    struct DepTreeNode *dep = parent;
+
+    while (dep != NULL) {
+        list = realloc(list, strlen(list) + strlen(dep->path) + 2);
+
+        strcat(list, " ");
+        strcat(list, dep->path);
+
+        dep = dep->nextSibling;
+    }
+
+    return list;
+}
+
+void freeDepTree(struct DepTreeNode *parent) {
+    if (parent->firstChild != NULL) {
+        freeDepTree(parent->firstChild);
+    }
+
+    struct DepTreeNode *dep = parent;
+    struct DepTreeNode *nextPtr = dep->nextSibling;
+
+    while (dep != NULL) {
+        nextPtr = dep->nextSibling;
+
+        free(dep->path);
+        free(dep);
+
+        dep = nextPtr;
+    }
+
+    free(nextPtr);
 }

@@ -66,7 +66,7 @@ char* findIncludePath(char* line, int lineLen) {
     return NULL;
 }
 
-struct Deps* findFileDeps(char* filepath) {
+struct Deps* parseFileDeps(char* filepath) {
     FILE* ptr;
     char ch;
     char* dir = filedir(filepath);

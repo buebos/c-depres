@@ -14,7 +14,7 @@
     "searchrelativepath.h": "c",
     "arrangefilename.h": "c",
     "string.h": "c",
-    "findfiledeps.h": "c",
+    "parseFileDeps.h": "c",
     "deptreenode.h": "c",
     "libgen.h": "c"
   },
