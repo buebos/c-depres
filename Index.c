@@ -1,3 +1,8 @@
+#include <stdio.h>
+
+#include "src/DepTreeNode.h"
+#include "src/arrangeFilename.h"
+#include "src/searchRelativePath.h"
 #include "src/util/printe.h"
 
 int main(int argc, char **argv) {
@@ -6,12 +11,17 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    // 1. search the file recursively
-    // find the non std includes of the file
-    // iterate through the array of dependencies
-    // find the dependecies in each of the elements
-    // repeat through all the dependecies in the array
-    //
+    char *filename = arrangeFilename(argv[1]);
+    char *rootFile = searchRelativePath(filename);
+
+    if (rootFile == NULL) {
+        printe("Could not find the file in any subdirectory. Are you sure this file exists?");
+        return -1;
+    }
+
+    struct DepTreeNode *depTreeRoot = DepTreeNode(rootFile);
+
+    fillDepTree(depTreeRoot);
 
     return 0;
 }

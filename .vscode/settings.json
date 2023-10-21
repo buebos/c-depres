@@ -6,7 +6,17 @@
     "random": "c",
     "numbers": "c",
     "floatmatrix.h": "c",
-    "funciones.h": "c"
+    "funciones.h": "c",
+    "vector": "c",
+    "xhash": "c",
+    "xstring": "c",
+    "printe.h": "c",
+    "searchrelativepath.h": "c",
+    "arrangefilename.h": "c",
+    "string.h": "c",
+    "findfiledeps.h": "c",
+    "deptreenode.h": "c",
+    "libgen.h": "c"
   },
   "C_Cpp.clang_format_fallbackStyle": "{ BasedOnStyle: Google, IndentWidth: 4, ColumnLimit: 0}"
 }
